@@ -3,6 +3,7 @@ from typing import (
     List,
 )
 from .cards import (
+    Rank,
     Deck,
     Waste,
     Pile,
@@ -136,3 +137,76 @@ class Game:
 
     def undo(self):
         raise NotImplementedError
+
+    def get_possible_actions(self) -> List[Action]:
+        actions = []
+        # source: pile
+        for i, pile in enumerate(self._piles):
+            if pile.top:
+                # target: foundation
+                foundation = next(f for f in self._foundations if f.suit == pile.top.suit)
+                if (
+                    foundation.top and foundation.top.rank.value == pile.top.rank.value - 1
+                    or pile.top.rank == Rank.ACE
+                ):
+                    actions.append(MoveFromPileToFoundationAction(source_pile_index=i, target_foundation_suit=foundation.suit))
+                # target: pile
+                for j, pile2 in enumerate(self._piles):
+                    if i == j:
+                        continue
+                    for k in range(1, pile.revealed_count + 1):
+                        if (
+                            (
+                                pile2.top is None
+                                and pile.cards[-k] is not None
+                                and pile.cards[-k].rank is Rank.KING
+                            ) or (
+                                pile2.top is not None
+                                and pile.cards[-k] is not None
+                                and pile.cards[-k].suit.color != pile2.top.suit.color
+                                and pile.cards[-k].rank.value + 1 == pile2.top.rank.value
+                            )
+                        ):
+                            actions.append(MoveFromPileToPileAction(source_pile_index=i, target_pile_index=j, count=k))
+        # source: waste
+        if self._waste.top is not None:
+            # target: foundation
+            foundation = next(f for f in self._foundations if f.suit == self._waste.top.suit)
+            if (
+                foundation.top and foundation.top.rank.value == self._waste.top.rank.value - 1
+                or self._waste.top.rank == Rank.ACE
+            ):
+                actions.append(MoveFromWasteToFoundationAction(target_foundation_suit=foundation.suit))
+            # target: pile
+            for i, pile in enumerate(self._piles):
+                if (
+                    (
+                        pile.top is None
+                        and self._waste.top.rank is Rank.KING
+                    ) or (
+                        pile.top is not None
+                        and self._waste.top.suit.color != pile.top.suit.color
+                        and self._waste.top.rank.value + 1 == pile.top.rank.value
+                    )
+                ):
+                    actions.append(MoveFromWasteToPileAction(target_pile_index=i))
+        # source: foundation
+        for foundation in self._foundations:
+            if foundation.top is None:
+                continue
+            for i, pile in enumerate(self._piles):
+                if (
+                    (
+                        pile.top is None
+                        and foundation.top.rank is Rank.KING
+                    ) or (
+                        pile.top is not None
+                        and foundation.top.suit.color != pile.top.suit.color
+                        and foundation.top.rank.value + 1 == pile.top.rank.value
+                    )
+                ):
+                    actions.append(MoveFromFoundationToPileAction(target_pile_index=i, source_foundation_suit=foundation.suit))
+        # source: deck
+        if self._deck.top or self._waste.top:
+            actions.append(DrawFromDeckAction())
+        return actions

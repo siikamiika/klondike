@@ -151,6 +151,8 @@ class Pile:
                 raise ValueError('Cannot push same color')
             if card.rank.value != self.top.rank.value - 1:
                 raise ValueError('Cannot push ranks other than top - 1 onto pile')
+        elif card.rank != Rank.KING:
+            raise ValueError('Cannot push ranks other than king onto an empty pile')
         self._cards.append(card)
         self._revealed_count += 1
 
