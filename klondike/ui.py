@@ -86,11 +86,12 @@ def render_foundation(foundation: Foundation):
 def render_game(game: Game) -> str:
     return \
 """\033[48;5;2;38;5;15m
-{deck} | {waste}
+{deck} | {waste} | {moves}
 {piles}
 {foundations}\033[0m""".format(
         deck=render_deck(game.deck),
         waste=render_waste(game.waste),
+        moves=game.history.length,
         piles=render_piles(game.piles),
         foundations=' | '.join(render_foundation(f) for f in game.foundations),
     )

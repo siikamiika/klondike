@@ -13,6 +13,10 @@ class History:
     def length(self) -> int:
         return len(self._actions)
 
+    @property
+    def actions(self):
+        return self._actions
+
     def push(self, action: Action):
         self._actions.append(action)
 

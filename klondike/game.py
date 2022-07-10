@@ -72,6 +72,10 @@ class Game:
     def foundations(self) -> List[Foundation]:
         return self._foundations
 
+    @property
+    def history(self) -> History:
+        return self._history
+
     def run_action(self, action: Action):
         if isinstance(action, DrawFromDeckAction):
             if action.count != 1:
@@ -136,7 +140,14 @@ class Game:
         self._history.push(action)
 
     def undo(self):
-        raise NotImplementedError
+        if self._history.length == 0:
+            return
+        self._history.pop()
+        game2 = Game.create(self.seed)
+        for action in self._history.actions:
+            game2.run_action(action)
+        # replace attributes in current game from the replayed game
+        self.__dict__.update(game2.__dict__)
 
     def get_possible_actions(self) -> List[Action]:
         actions = []
