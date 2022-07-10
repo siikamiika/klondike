@@ -1,0 +1,4 @@
+- autoplay
+    - detect and avoid getting stuck loops using state hashes
+- win probability
+- dead end analysis

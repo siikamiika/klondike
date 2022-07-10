@@ -6,6 +6,7 @@ from typing import (
 import enum
 import random
 import sys
+import hashlib
 
 class Color(enum.Enum):
     BLACK = 1
@@ -29,6 +30,9 @@ class Suit(enum.Enum):
             return Color.BLACK
         raise Exception(f'Invalid suit: {self}')
 
+    def sha256_hash(self) -> bytes:
+        return hashlib.sha256((self.__class__.__name__ + '.' + self.name).encode('utf-8')).digest()
+
 class Rank(enum.Enum):
     ACE = 1
     TWO = 2
@@ -44,6 +48,9 @@ class Rank(enum.Enum):
     QUEEN = 12
     KING = 13
 
+    def sha256_hash(self) -> bytes:
+        return hashlib.sha256((self.__class__.__name__ + '.' + self.name).encode('utf-8')).digest()
+
 class Card:
     def __init__(self, suit: Suit, rank: Rank):
         self._suit = suit
@@ -56,6 +63,13 @@ class Card:
     @property
     def rank(self) -> Rank:
         return self._rank
+
+    def sha256_hash(self) -> bytes:
+        return hashlib.sha256(
+            hashlib.sha256(b'Card').digest()
+            + self._suit.sha256_hash()
+            + self._rank.sha256_hash()
+        ).digest()
 
 class Deck:
     def __init__(self, cards: List[Card], seed):
@@ -93,6 +107,12 @@ class Deck:
         random.Random(seed).shuffle(cards)
         return cls(cards, seed)
 
+    def sha256_hash(self) -> bytes:
+        return hashlib.sha256(
+            hashlib.sha256(b'Deck').digest()
+            + b''.join(c.sha256_hash() for c in self._cards)
+        ).digest()
+
 class Waste:
     def __init__(self):
         self._cards: List[Card] = []
@@ -108,6 +128,12 @@ class Waste:
 
     def push(self, card: Card):
         self._cards.append(card)
+
+    def sha256_hash(self) -> bytes:
+        return hashlib.sha256(
+            hashlib.sha256(b'Waste').digest()
+            + b''.join(c.sha256_hash() for c in self._cards)
+        ).digest()
 
 class Pile:
     def __init__(self, cards: List[Card]):
@@ -153,6 +179,13 @@ class Pile:
         self._cards.append(card)
         self._revealed_count += 1
 
+    def sha256_hash(self) -> bytes:
+        return hashlib.sha256(
+            hashlib.sha256(b'Pile').digest()
+            + hashlib.sha256(bytes([self._revealed_count])).digest()
+            + b''.join(c.sha256_hash() for c in self._cards)
+        ).digest()
+
 class Foundation:
     def __init__(self, suit: Suit):
         self._suit = suit
@@ -180,3 +213,10 @@ class Foundation:
         if card.rank.value - 1 != top_value:
             raise ValueError('Cannot push ranks other than top + 1 onto foundation')
         self._cards.append(card)
+
+    def sha256_hash(self) -> bytes:
+        return hashlib.sha256(
+            hashlib.sha256(b'Foundation').digest()
+            + self._suit.sha256_hash()
+            + b''.join(c.sha256_hash() for c in self._cards)
+        ).digest()

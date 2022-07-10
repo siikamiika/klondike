@@ -86,9 +86,11 @@ def render_foundation(foundation: Foundation):
 def render_game(game: Game) -> str:
     return \
 """\033[48;5;2;38;5;15m
+{hash}
 {deck} | {waste} | {moves}
 {piles}
 {foundations}\033[0m""".format(
+        hash=game.sha256_hash().hex(),
         deck=render_deck(game.deck),
         waste=render_waste(game.waste),
         moves=game.history.length,

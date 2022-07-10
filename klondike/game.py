@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import (
     List,
 )
+import hashlib
 from .cards import (
     Rank,
     Deck,
@@ -221,3 +222,11 @@ class Game:
         if self._deck.top or self._waste.top:
             actions.append(DrawFromDeckAction())
         return actions
+
+    def sha256_hash(self) -> bytes:
+        return hashlib.sha256(
+            self._deck.sha256_hash()
+            + self._waste.sha256_hash()
+            + b''.join(p.sha256_hash() for p in self._piles)
+            + b''.join(f.sha256_hash() for f in self._foundations)
+        ).digest()
