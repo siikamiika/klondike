@@ -137,10 +137,7 @@ class Pile:
         remaining, drawn = self._cards[:-count], self._cards[-count:]
         self._cards = remaining
         if count == self._revealed_count:
-            if count == len(self._cards):
-                self._revealed_count = 0
-            else:
-                self._revealed_count = 1
+            self._revealed_count = 0 if len(remaining) == 0 else 1
         else:
             self._revealed_count -= count
         return drawn
